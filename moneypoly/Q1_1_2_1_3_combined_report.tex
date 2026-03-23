@@ -1,0 +1,173 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{MoneyPoly White-Box Report (Q1.2 + Q1.3)}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{1.2 Code Quality Analysis}
+
+\subsection*{Objective}
+Analyze the codebase using \texttt{pylint}, iteratively fix warnings/suggestions, and record each iteration as a separate commit.
+
+\subsection*{Scope}
+\begin{itemize}
+  \item Target package: \texttt{moneypoly/moneypoly/moneypoly}
+  \item Environment: workspace \texttt{.venv}
+  \item Evidence file: \texttt{moneypoly/moneypoly/pylint\_q1\_1\_2.txt}
+\end{itemize}
+
+\subsection*{Command Used}
+\begin{verbatim}
+Set-Location moneypoly/moneypoly
+$env:PYTHONPATH=(Get-Location).Path
+python -m pylint moneypoly --output-format=text > pylint_q1_1_2.txt
+\end{verbatim}
+
+\subsection*{Iteration-wise Changes (Required Commit Format)}
+
+\subsubsection*{Iteration 1: Fix core pylint warnings in gameplay modules}
+\begin{itemize}
+  \item Added missing docstrings in core modules.
+  \item Removed unused imports and variables.
+  \item Replaced broad exception handling with specific exceptions.
+  \item Corrected singleton comparison style.
+  \item Commit: \texttt{f66149d}
+\end{itemize}
+
+\subsubsection*{Iteration 2: Refine control flow and module documentation}
+\begin{itemize}
+  \item Removed unnecessary \texttt{else} and redundant parentheses.
+  \item Cleaned non-interpolated f-string usage.
+  \item Added module documentation and improved readability.
+  \item Commit: \texttt{36cf378}
+\end{itemize}
+
+\subsubsection*{Iteration 3: Add pylint configuration and final report evidence}
+\begin{itemize}
+  \item Added \texttt{.pylintrc} for project-consistent linting.
+  \item Added package initializer and final newline cleanups.
+  \item Generated final lint output evidence.
+  \item Commit: \texttt{584118c}
+\end{itemize}
+
+\subsection*{1.2 Result}
+\begin{itemize}
+  \item Final pylint score: \textbf{10.00/10}
+\end{itemize}
+
+\section*{1.3 White Box Test Cases}
+
+\subsection*{Objective}
+Design white-box test cases based on code structure to cover:
+\begin{itemize}
+  \item all branches (decision paths),
+  \item key variable states affecting behavior,
+  \item edge cases (zero values, boundaries, unexpected actions).
+\end{itemize}
+Also explain why each test is needed and list all detected logical issues.
+
+\subsection*{Scope and Evidence}
+\begin{itemize}
+  \item Main modules covered: \texttt{player.py}, \texttt{property.py}, \texttt{board.py}, \texttt{bank.py}, \texttt{cards.py}, \texttt{dice.py}, \texttt{game.py}, \texttt{ui.py}
+  \item Test suite file: \texttt{moneypoly/moneypoly/tests/test\_white\_box\_q1\_3.py}
+  \item Execution output: \texttt{moneypoly/moneypoly/pytest\_q1\_1\_3.txt}
+\end{itemize}
+
+\subsection*{Execution Command}
+\begin{verbatim}
+Set-Location moneypoly/moneypoly
+$env:PYTHONPATH=(Get-Location).Path
+python -m pytest tests/test_white_box_q1_3.py -q
+\end{verbatim}
+
+\subsection*{Test Coverage Summary}
+\begin{itemize}
+  \item Total white-box test cases executed: \textbf{167}
+  \item Result: \textbf{167 passed}
+\end{itemize}
+
+\begin{longtable}{|p{0.33\textwidth}|p{0.14\textwidth}|p{0.43\textwidth}|}
+\hline
+\textbf{Area} & \textbf{Count} & \textbf{Coverage Detail} \\
+\hline
+Player states and movement & 60 & add/deduct branches, bankruptcy states, wrap/no-wrap movement, GO salary branch, zero/negative movement edge paths \\
+\hline
+Property and group logic & 11 & full-set ownership validation, rent branches, mortgage/unmortgage edge paths, availability matrix \\
+\hline
+Board behavior & 39 & special-tile branches, property/blank classification, purchasable-state combinations \\
+\hline
+Bank behavior & 17 & collection edge values, payout edge paths, insufficient-funds exception path, loan stats \\
+\hline
+Card deck behavior & 9 & draw cycle, empty deck path, cards remaining cycle checks, reshuffle reset \\
+\hline
+Game decision paths & 20 & buy/rent/trade/mortgage branches, bankruptcy elimination, winner selection, jail and card action branches \\
+\hline
+UI helper behavior & 11 & input parsing valid/invalid paths, confirmation normalization, output formatting \\
+\hline
+\end{longtable}
+
+\subsection*{Detected Issues and Fixes (Required Error Commit Format)}
+
+\subsubsection*{Error \#1: GO salary not awarded when passing start}
+\begin{itemize}
+  \item Root cause: salary branch checked only \texttt{position == 0}
+  \item Fix commit: \texttt{bde31d5} -- \texttt{Error \#1: fix GO salary when passing start}
+\end{itemize}
+
+\subsubsection*{Error \#2: Property-group ownership accepted partial ownership}
+\begin{itemize}
+  \item Root cause: used \texttt{any(...)} instead of all-properties check
+  \item Fix commit: \texttt{805180b} -- \texttt{Error \#2: correct full-set ownership logic for property groups}
+\end{itemize}
+
+\subsubsection*{Error \#3: Exact-balance purchase was rejected}
+\begin{itemize}
+  \item Root cause: affordability branch used \texttt{<=}
+  \item Fix commit: \texttt{6cad79b} -- \texttt{Error \#3: allow buying property with exact available balance}
+\end{itemize}
+
+\subsubsection*{Error \#4: Rent not credited to owner}
+\begin{itemize}
+  \item Root cause: missing owner credit operation in \texttt{pay\_rent}
+  \item Fix commit: \texttt{9cef347} -- \texttt{Error \#4: transfer rent to owner when tenant pays}
+\end{itemize}
+
+\subsubsection*{Error \#5: Winner selected by lowest net worth}
+\begin{itemize}
+  \item Root cause: used \texttt{min(...)} instead of \texttt{max(...)}
+  \item Fix commit: \texttt{65d5be4} -- \texttt{Error \#5: choose winner by highest net worth}
+\end{itemize}
+
+\subsubsection*{Error \#6: Empty deck crash in cards\_remaining}
+\begin{itemize}
+  \item Root cause: modulo-by-zero when card deck is empty
+  \item Fix commit: \texttt{9ef2a56} -- \texttt{Error \#6: handle empty deck in cards\_remaining}
+\end{itemize}
+
+\subsubsection*{Error \#7: Unmortgage could clear state before affordability validation}
+\begin{itemize}
+  \item Root cause: \texttt{unmortgage()} called before checking player balance
+  \item Fix commit: \texttt{2bb5cc2} -- \texttt{Error \#7: prevent unmortgage state loss on insufficient funds}
+\end{itemize}
+
+\section*{Conclusion}
+The submission satisfies both sections in the assignment prompt:
+\begin{itemize}
+  \item \textbf{1.2:} Iterative pylint-based quality improvement with commit traceability and final score of 10.00/10.
+  \item \textbf{1.3:} Large white-box suite (167 tests) covering branches, key state transitions, and edge cases, with all detected logic issues fixed using required \texttt{Error \#: <What You Changed>} commit naming.
+\end{itemize}
+
+\end{document}
