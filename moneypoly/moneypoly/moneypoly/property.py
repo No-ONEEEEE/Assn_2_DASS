@@ -1,12 +1,10 @@
-"""Property and property-group domain models for board ownership."""
+"""Property and color-group domain models for MoneyPoly."""
 
 class Property:
     """Represents a single purchasable property tile on the MoneyPoly board."""
-    # pylint: disable=too-many-instance-attributes
 
     FULL_GROUP_MULTIPLIER = 2
 
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, name, position, price, base_rent, group=None):
         self.name = name
         self.position = position

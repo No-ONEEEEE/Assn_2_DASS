@@ -1,4 +1,4 @@
-"""Core MoneyPoly game engine and turn-resolution orchestration."""
+"""Core game loop and turn resolution logic for MoneyPoly."""
 
 from moneypoly.config import (
     JAIL_FINE,
@@ -18,7 +18,6 @@ from moneypoly import ui
 
 class Game:
     """Manages the full state and flow of a MoneyPoly game session."""
-    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, player_names):
         self.board = Board()
@@ -115,7 +114,7 @@ class Game:
 
         self._check_bankruptcy(player)
 
-    # pylint: disable=too-many-branches
+
     def _handle_property_tile(self, player, prop):
         """Decide what to do when `player` lands on a property tile."""
         if prop.owner is None:

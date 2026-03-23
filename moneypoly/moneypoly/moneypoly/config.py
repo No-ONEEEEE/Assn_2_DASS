@@ -1,4 +1,4 @@
-"""Configuration constants for game rules, board layout, and economy."""
+"""Core game constants used across the MoneyPoly package."""
 
 STARTING_BALANCE = 1500
 GO_SALARY = 200
