@@ -1,0 +1,181 @@
+2.1 Call Graph - Step-by-Step Guide
+
+Goal for 2.1:
+- Draw a hand-made function call graph showing calls within and across modules.
+- One node = one function.
+- Arrow direction = caller -> callee.
+- Cross-module calls must be clear.
+
+Step 1: List all modules to include
+- registration
+- crew_management
+- inventory
+- race_management
+- results
+- mission_planning
+- maintenance
+- reporting
+- optional: run_integration_demo (if your instructor expects script-level calls too)
+
+Step 2: In each module, list function nodes
+Draw module-wise boxes first, then write function names inside.
+
+registration
+- register_crew_member
+- get_crew_member
+- list_crew
+- update_crew_role
+
+crew_management
+- assign_role
+- set_skill
+- get_crew_role
+- get_crew_by_role
+- set_availability
+- is_crew_available
+
+inventory
+- add_car
+- get_car
+- get_available_car
+- set_car_status
+- add_tool
+- update_tool_quantity
+- add_cash
+- deduct_cash
+- get_cash_balance
+- has_damaged_car
+
+race_management
+- create_race
+- register_driver_for_race
+- assign_car_to_driver
+- _race_ready_to_start
+- start_race
+- complete_race
+
+results
+- _ensure_driver
+- record_race_result
+- update_driver_ranking
+- get_driver_statistics
+- get_leaderboard
+- get_all_race_results
+
+mission_planning
+- create_mission
+- get_all_missions
+- assign_crew_to_mission
+- validate_mission
+- start_mission
+- complete_mission
+
+maintenance
+- schedule_repair
+- complete_repair
+- get_car_service_history
+
+reporting
+- generate_race_summary
+- generate_mission_summary
+- generate_financial_report
+
+Step 3: Draw intra-module arrows first
+These are easiest and reduce clutter later.
+
+race_management
+- start_race -> _race_ready_to_start
+
+results
+- record_race_result -> _ensure_driver
+- update_driver_ranking -> _ensure_driver
+- get_driver_statistics -> _ensure_driver
+
+mission_planning
+- start_mission -> validate_mission
+
+Step 4: Draw cross-module arrows (most important part)
+Use a different color pen for cross-module calls.
+
+crew_management -> registration
+- assign_role -> get_crew_member
+- set_skill -> get_crew_member
+- get_crew_role -> get_crew_member
+- get_crew_by_role -> list_crew
+- set_availability -> get_crew_member
+- is_crew_available -> get_crew_member
+
+race_management -> registration
+- register_driver_for_race -> get_crew_member
+
+race_management -> crew_management
+- register_driver_for_race -> is_crew_available
+- _race_ready_to_start -> is_crew_available
+
+race_management -> inventory
+- assign_car_to_driver -> get_car
+- assign_car_to_driver -> get_available_car
+- assign_car_to_driver -> set_car_status
+- complete_race -> set_car_status
+
+race_management -> results
+- complete_race -> record_race_result
+
+results -> inventory
+- record_race_result -> add_cash
+
+mission_planning -> crew_management
+- validate_mission -> get_crew_role
+- validate_mission -> is_crew_available
+
+mission_planning -> inventory
+- validate_mission -> has_damaged_car
+- complete_mission -> add_cash
+- complete_mission -> set_car_status
+
+maintenance -> inventory
+- schedule_repair -> set_car_status
+- complete_repair -> deduct_cash
+- complete_repair -> set_car_status
+
+reporting -> results
+- generate_race_summary -> get_all_race_results
+
+reporting -> mission_planning
+- generate_mission_summary -> get_all_missions
+
+reporting -> inventory
+- generate_financial_report -> get_cash_balance
+
+Step 5: Make cross-module calls visually clear
+- Draw each module in a separate rectangle.
+- Use black arrows for same-module calls.
+- Use blue arrows for cross-module calls.
+- Put a small legend at top-right:
+  - black = intra-module
+  - blue = inter-module
+
+Step 6: Keep the graph readable
+- Place modules roughly in layers:
+  - Top: registration, crew_management, inventory
+  - Middle: race_management, mission_planning, maintenance, results
+  - Bottom: reporting
+- Keep arrows mostly left-to-right or top-to-bottom.
+- Avoid arrow overlap as much as possible.
+
+Step 7: Add title and caption
+Title:
+- 2.1 Call Graph - Street Race Manager
+
+Caption line under figure:
+- Each node is a single function. Arrows indicate caller to callee. Blue arrows denote cross-module function calls.
+
+Step 8: Verify before submission
+Checklist:
+- Every function in module list is shown as a node.
+- Every key call edge listed above is drawn.
+- Cross-module calls are clearly distinguishable.
+- Image is clear and readable in report.
+
+Is your 2.2 enough?
+- Yes. With 18 integration scenarios plus the coverage summary, 2.2 is strong and sufficient for assignment expectations.
