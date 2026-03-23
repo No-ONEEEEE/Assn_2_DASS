@@ -1,1 +1,0 @@
-"""MoneyPoly game package."""
