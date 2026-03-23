@@ -2,126 +2,118 @@
 
 ## Objective
 
-Design white-box test cases based on code structure to cover:
+Design white-box test cases from internal code structure so they cover:
 - all important branches (decision paths),
-- key variable states affecting behavior,
-- relevant edge cases.
-
-Then explain why each test is needed, identify logic errors found, and document fixes with required commit format.
+- key variable states that can affect program behavior,
+- relevant edge cases (zero values, boundaries, unexpected actions).
 
 ## Scope
 
-- Code under test:
+- Code modules covered:
   - `moneypoly/moneypoly/moneypoly/player.py`
   - `moneypoly/moneypoly/moneypoly/property.py`
-  - `moneypoly/moneypoly/moneypoly/game.py`
+  - `moneypoly/moneypoly/moneypoly/board.py`
+  - `moneypoly/moneypoly/moneypoly/bank.py`
+  - `moneypoly/moneypoly/moneypoly/cards.py`
   - `moneypoly/moneypoly/moneypoly/dice.py`
-- Test file:
+  - `moneypoly/moneypoly/moneypoly/game.py`
+  - `moneypoly/moneypoly/moneypoly/ui.py`
+- White-box test file:
   - `moneypoly/moneypoly/tests/test_white_box_q1_3.py`
-- Test evidence:
+- Evidence output:
   - `moneypoly/moneypoly/pytest_q1_1_3.txt`
 
-## White-box Test Design
+## Test Suite Size
 
-### T1: Dice upper-face boundary is reachable
-- Test: `test_dice_roll_can_reach_six`
-- Why needed:
-  - Ensures dice simulation includes highest valid face value.
-  - Covers edge value branch at upper boundary.
-- Decision/State covered:
-  - Random draw range includes max face.
+Total executed test cases: **167**
 
-### T2: GO salary when crossing board start
-- Test: `test_player_move_awards_go_salary_when_passing_go`
-- Why needed:
-  - Movement logic has a branch for salary award; crossing without landing exactly on 0 must still pay salary.
-- Decision/State covered:
-  - `old_position`, new position wrap-around, salary increment path.
+Execution result:
+- **167 passed**
+- **0 failed**
 
-### T3: Full color group ownership requires all properties
-- Test: `test_property_group_requires_all_properties_owned_by_same_player`
-- Why needed:
-  - Rent multiplier depends on complete group ownership.
-  - Partial ownership must not trigger multiplier branch.
-- Decision/State covered:
-  - Group ownership aggregation over all properties.
+## Coverage Breakdown (Why these tests were needed)
 
-### T4: Exact-balance property purchase boundary
-- Test: `test_buy_property_allows_exact_balance_purchase`
-- Why needed:
-  - Boundary condition for purchase affordability (`balance == price`) is critical.
-- Decision/State covered:
-  - Affordability check true/false branch at equality edge.
+1. Player state and movement logic (60 tests)
+- Money add/deduct positive and negative paths
+- Bankruptcy states (`balance < 0`, `= 0`, `> 0`)
+- Movement with and without board wrap
+- GO salary branch when crossing start
+- Zero/negative move edge behavior
+- Property add/remove and status string state markers
 
-### T5: Rent transfer updates both players
-- Test: `test_pay_rent_transfers_amount_to_owner`
-- Why needed:
-  - Financial transfer path should debit tenant and credit owner.
-- Decision/State covered:
-  - Owner not null, rent calculation, two-balance state update.
+2. Property and group ownership logic (11 tests)
+- Full-group ownership branch (`all` vs partial ownership)
+- Rent branches: normal, doubled, mortgaged
+- Mortgage/unmortgage edge paths
+- Availability matrix from owner/mortgage states
+- Owner-count aggregation
 
-### T6: Winner selection uses highest net worth
-- Test: `test_find_winner_returns_highest_net_worth_player`
-- Why needed:
-  - End-game correctness depends on choosing maximum net worth.
-- Decision/State covered:
-  - Aggregate selection path across multiple players.
+3. Board tile classification and purchase logic (39 tests)
+- All special-tile mapping branches
+- Property vs blank tile detection
+- Purchasable branch matrix (unowned/owned/mortgaged/non-property)
+- Owned/unowned partition consistency
 
-## Errors Found and Fixes
+4. Bank behavior and monetary edge cases (17 tests)
+- Collection with positive, zero, and negative values
+- Payout for non-positive values
+- Insufficient-funds exception path
+- Loan issue path and loan-stat aggregation
+
+5. Card deck state-machine logic (9 tests)
+- Draw cycling behavior
+- Empty-deck branches
+- cards_remaining boundary cycle checks
+- Reshuffle state reset behavior
+
+6. Game core decision paths (20 tests)
+- buy_property boundary (`balance == price`)
+- pay_rent branch cases (owner none, mortgaged, normal)
+- mortgage/unmortgage branch flow
+- trade success/failure branches
+- bankruptcy elimination path
+- winner selection path
+- card action branches (`collect`, `pay`, `jail`, `jail_free`, `move_to`, `birthday`, `collect_from_all`)
+- jail handling branches (card use, fine pay, mandatory release)
+- turn-level branches and interactive menu dispatch
+
+7. UI helper validation (11 tests)
+- Currency formatter
+- safe_int_input valid/invalid input paths
+- confirm input normalization paths
+- print helper emission checks
+
+## Errors Found and Fixes (with required commit format)
 
 ### Error #1: GO salary not awarded when passing start square
-- Failing behavior:
-  - Player moving from 39 to 1 did not receive GO salary.
-- Root cause:
-  - Salary logic checked only `position == 0`.
-- Fix:
-  - Detect wrap-around using old/new position and positive step.
-- Commit:
-  - `a545f03` - `Error #1: fix GO salary when passing start`
+- Root cause: salary logic only checked `position == 0`.
+- Fix commit: `a545f03` — `Error #1: fix GO salary when passing start`
 
-### Error #2: Property group ownership check used partial ownership
-- Failing behavior:
-  - Group ownership returned true when only one property in group matched owner.
-- Root cause:
-  - Used `any(...)` instead of all-properties check.
-- Fix:
-  - Require non-empty group and `all(p.owner == player ...)`.
-- Commit:
-  - `a78021a` - `Error #2: correct full-set ownership logic for property groups`
+### Error #2: Property-group ownership accepted partial ownership
+- Root cause: used `any(...)` instead of requiring all properties in group.
+- Fix commit: `a78021a` — `Error #2: correct full-set ownership logic for property groups`
 
 ### Error #3: Exact-balance purchase was rejected
-- Failing behavior:
-  - Player with balance exactly equal to property price could not buy.
-- Root cause:
-  - Affordability branch used `<=` reject condition.
-- Fix:
-  - Changed check to `<` so equality is allowed.
-- Commit:
-  - `2cc419b` - `Error #3: allow buying property with exact available balance`
+- Root cause: affordability check used `<=` rejection.
+- Fix commit: `2cc419b` — `Error #3: allow buying property with exact available balance`
 
-### Error #4: Rent was not credited to property owner
-- Failing behavior:
-  - Tenant balance decreased, owner balance unchanged.
-- Root cause:
-  - Missing owner credit operation in rent flow.
-- Fix:
-  - Added `prop.owner.add_money(rent)`.
-- Commit:
-  - `5c09312` - `Error #4: transfer rent to owner when tenant pays`
+### Error #4: Rent was not credited to owner
+- Root cause: transfer step to owner was missing in `pay_rent`.
+- Fix commit: `5c09312` — `Error #4: transfer rent to owner when tenant pays`
 
-### Error #5: Winner selection returned lowest net worth player
-- Failing behavior:
-  - End-game winner chosen using minimum wealth.
-- Root cause:
-  - Used `min(...)` instead of `max(...)`.
-- Fix:
-  - Changed selection to `max(self.players, key=lambda p: p.net_worth())`.
-- Commit:
-  - `d6a35d7` - `Error #5: choose winner by highest net worth`
+### Error #5: Winner selection returned lowest net worth
+- Root cause: used `min(...)` instead of `max(...)`.
+- Fix commit: `d6a35d7` — `Error #5: choose winner by highest net worth`
 
-## Execution Summary
+### Error #6: CardDeck empty state crashed in cards_remaining
+- Root cause: modulo by zero when deck is empty.
+- Fix commit: `15766ab` — `Error #6: handle empty deck in cards_remaining`
 
-Run command:
+### Error #7: Unmortgage could clear mortgage state before affordability validation
+- Root cause: `unmortgage()` was called before checking player balance.
+- Fix commit: `5ccaa98` — `Error #7: prevent unmortgage state loss on insufficient funds`
+
+## Execution Command
 
 ```powershell
 Set-Location moneypoly/moneypoly
@@ -129,14 +121,6 @@ $env:PYTHONPATH=(Get-Location).Path
 python -m pytest tests/test_white_box_q1_3.py -q
 ```
 
-Result:
-- `6 passed`
-
-## Branch and Push Status
-
-- `part-1` merged into `main`.
-- Section 1.3 work committed on branch `part-1.3` using required commit message format for fixes.
-
 ## Conclusion
 
-The white-box suite now covers branch decisions, key state transitions, and boundary conditions for core game mechanics. Five real logic errors were identified and fixed through isolated commits, and all designed tests pass.
+Section 1.3 now has a large white-box suite (167 cases) that covers major branches, key variable-state transitions, and relevant edge conditions across core MoneyPoly modules. All tests pass, and identified logic defects were corrected with traceable `Error #` commits.

@@ -18,100 +18,94 @@
 \maketitle
 
 \section*{Objective}
-Design white-box tests from program structure to cover:
-\begin{itemize}
-  \item all important decision paths,
-  \item key variable states affecting behavior,
-  \item relevant edge cases.
-\end{itemize}
-Then identify errors revealed by tests, fix them, and commit each fix in the required format \texttt{Error \#: <What You Changed>}.
+Design white-box tests from internal structure to cover all decision branches, key variable states, and edge-case behaviors.
 
 \section*{Scope}
 \begin{itemize}
-  \item Code under test: \texttt{player.py}, \texttt{property.py}, \texttt{game.py}, \texttt{dice.py}
-  \item Test file: \texttt{moneypoly/moneypoly/tests/test\_white\_box\_q1\_3.py}
-  \item Evidence: \texttt{moneypoly/moneypoly/pytest\_q1\_1\_3.txt}
+  \item Modules: \texttt{player.py, property.py, board.py, bank.py, cards.py, dice.py, game.py, ui.py}
+  \item Test suite: \texttt{moneypoly/moneypoly/tests/test\_white\_box\_q1\_3.py}
+  \item Evidence file: \texttt{moneypoly/moneypoly/pytest\_q1\_1\_3.txt}
 \end{itemize}
 
-\section*{White-box Test Design and Coverage}
-\begin{longtable}{|p{0.12\textwidth}|p{0.31\textwidth}|p{0.23\textwidth}|p{0.25\textwidth}|}
+\section*{Test Suite Size and Result}
+\begin{itemize}
+  \item Total test cases executed: \textbf{167}
+  \item Result: \textbf{167 passed}, \textbf{0 failed}
+\end{itemize}
+
+\section*{Coverage Summary}
+\begin{longtable}{|p{0.34\textwidth}|p{0.17\textwidth}|p{0.39\textwidth}|}
 \hline
-\textbf{Test ID} & \textbf{Purpose} & \textbf{Coverage Type} & \textbf{Target Logic} \\
+\textbf{Area} & \textbf{Count} & \textbf{What is covered} \\
 \hline
-T1 & Ensure dice upper boundary can be produced & Edge value + branch input & Dice face range handling \\
+Player states and movement & 60 & add/deduct branches, bankruptcy states, movement wrap/no-wrap, GO salary, zero/negative movement, property list state \\
 \hline
-T2 & Ensure GO salary is awarded when crossing start & Decision path + state transition & Movement wrap-around branch \\
+Property and group logic & 11 & full-set ownership branch, rent branches, mortgage/unmortgage edges, availability matrix, owner counts \\
 \hline
-T3 & Ensure full-set ownership requires all properties & Decision path & PropertyGroup ownership aggregation \\
+Board tile behavior & 39 & all special-tile branches, property/blank classification, purchasable-state matrix, owned/unowned partition \\
 \hline
-T4 & Ensure exact-balance purchase succeeds & Boundary condition & Buy affordability branch \((=)\) \\
+Bank behavior & 17 & collect edge values, payout non-positive and insufficient-funds paths, loan issue and aggregates \\
 \hline
-T5 & Ensure rent transfer updates both tenant and owner & State transition + data flow & Rent debit/credit flow \\
+Card deck state machine & 9 & draw cycle, empty deck branches, cards\_remaining cycle boundaries, reshuffle reset \\
 \hline
-T6 & Ensure winner is highest net worth player & Decision path & End-game winner selection \\
+Game core decisions & 20 & buy/trade/mortgage branches, rent transfer, bankruptcy elimination, winner selection, card actions, jail paths, menu dispatch \\
+\hline
+UI helpers & 11 & formatting, input parsing valid/invalid paths, confirmation parsing, output helpers \\
 \hline
 \end{longtable}
 
-\section*{Errors Found and Fixes}
+\section*{Errors Found and Fixes (Required Commit Format)}
 
 \subsection*{Error \#1: GO salary not awarded when passing start}
 \begin{itemize}
-  \item \textbf{Observed:} Moving from position 39 to 1 did not increase balance.
-  \item \textbf{Root cause:} Salary granted only when \texttt{position == 0}.
-  \item \textbf{Fix:} Use old/new position wrap-around detection for positive moves.
-  \item \textbf{Commit:} \texttt{a545f03} - \texttt{Error \#1: fix GO salary when passing start}
+  \item Root cause: salary branch only checked \texttt{position == 0}
+  \item Commit: \texttt{a545f03} -- \texttt{Error \#1: fix GO salary when passing start}
 \end{itemize}
 
-\subsection*{Error \#2: Full-group ownership check accepted partial ownership}
+\subsection*{Error \#2: Property-group ownership accepted partial ownership}
 \begin{itemize}
-  \item \textbf{Observed:} Group reported owned when only one property matched owner.
-  \item \textbf{Root cause:} Used \texttt{any(...)} instead of all-properties check.
-  \item \textbf{Fix:} Require non-empty set and \texttt{all(p.owner == player ...)}.
-  \item \textbf{Commit:} \texttt{a78021a} - \texttt{Error \#2: correct full-set ownership logic for property groups}
+  \item Root cause: used \texttt{any(...)} instead of all-properties check
+  \item Commit: \texttt{a78021a} -- \texttt{Error \#2: correct full-set ownership logic for property groups}
 \end{itemize}
 
 \subsection*{Error \#3: Exact-balance purchase rejected}
 \begin{itemize}
-  \item \textbf{Observed:} Player with balance equal to price could not buy.
-  \item \textbf{Root cause:} Affordability check used \texttt{<=} reject branch.
-  \item \textbf{Fix:} Change condition to \texttt{<} so equality is valid.
-  \item \textbf{Commit:} \texttt{2cc419b} - \texttt{Error \#3: allow buying property with exact available balance}
+  \item Root cause: affordability check used \texttt{<=}
+  \item Commit: \texttt{2cc419b} -- \texttt{Error \#3: allow buying property with exact available balance}
 \end{itemize}
 
 \subsection*{Error \#4: Rent not credited to owner}
 \begin{itemize}
-  \item \textbf{Observed:} Tenant lost money but owner balance remained unchanged.
-  \item \textbf{Root cause:} Missing owner credit operation in rent flow.
-  \item \textbf{Fix:} Add \texttt{prop.owner.add\_money(rent)}.
-  \item \textbf{Commit:} \texttt{5c09312} - \texttt{Error \#4: transfer rent to owner when tenant pays}
+  \item Root cause: missing owner credit operation in \texttt{pay\_rent}
+  \item Commit: \texttt{5c09312} -- \texttt{Error \#4: transfer rent to owner when tenant pays}
 \end{itemize}
 
-\subsection*{Error \#5: Winner selected by lowest wealth}
+\subsection*{Error \#5: Winner selected by lowest net worth}
 \begin{itemize}
-  \item \textbf{Observed:} Winner function returned minimum net worth player.
-  \item \textbf{Root cause:} Used \texttt{min(...)} for winner computation.
-  \item \textbf{Fix:} Replace with \texttt{max(...)} by net worth.
-  \item \textbf{Commit:} \texttt{d6a35d7} - \texttt{Error \#5: choose winner by highest net worth}
+  \item Root cause: used \texttt{min(...)} instead of \texttt{max(...)}
+  \item Commit: \texttt{d6a35d7} -- \texttt{Error \#5: choose winner by highest net worth}
 \end{itemize}
 
-\section*{Execution Summary}
-\textbf{Command:}
+\subsection*{Error \#6: Empty card deck crashed in cards\_remaining}
+\begin{itemize}
+  \item Root cause: modulo-by-zero when deck length was zero
+  \item Commit: \texttt{15766ab} -- \texttt{Error \#6: handle empty deck in cards\_remaining}
+\end{itemize}
+
+\subsection*{Error \#7: Unmortgage could clear state before affordability validation}
+\begin{itemize}
+  \item Root cause: \texttt{unmortgage()} was called before balance check
+  \item Commit: \texttt{5ccaa98} -- \texttt{Error \#7: prevent unmortgage state loss on insufficient funds}
+\end{itemize}
+
+\section*{Execution Command}
 \begin{verbatim}
 Set-Location moneypoly/moneypoly
 $env:PYTHONPATH=(Get-Location).Path
 python -m pytest tests/test_white_box_q1_3.py -q
 \end{verbatim}
 
-\textbf{Result:} \texttt{6 passed}
-
-\section*{Branch Workflow}
-\begin{itemize}
-  \item \texttt{part-1} was merged into \texttt{main}.
-  \item 1.3 development and fixes were done on branch \texttt{part-1.3}.
-  \item Error corrections were committed individually with required naming format.
-\end{itemize}
-
 \section*{Conclusion}
-The 1.3 white-box activity is complete with decision-path coverage, state-transition checks, and edge-condition tests. Five genuine logic defects were found and fixed with traceable commits, and all designed tests pass.
+The section 1.3 suite now contains 167 white-box tests and exercises nearly all important branches, state transitions, and edge cases in core MoneyPoly logic. All tests pass, and discovered defects are fixed with traceable \texttt{Error \#} commits.
 
 \end{document}
