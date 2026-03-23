@@ -1,10 +1,10 @@
-"""Bank model handling central game funds and loan operations."""
+"""Banking operations for MoneyPoly."""
 
 from moneypoly.config import BANK_STARTING_FUNDS
 
 
 class Bank:
-    """Represents the game bank and tracks incoming/outgoing funds."""
+    """Tracks available bank funds, collections, and issued emergency loans."""
 
     def __init__(self):
         self._funds = BANK_STARTING_FUNDS

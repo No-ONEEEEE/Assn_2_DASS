@@ -1,4 +1,4 @@
-"""Console UI helpers for formatting output and collecting user input."""
+"""Console output and user-input helpers for MoneyPoly."""
 
 def print_banner(title):
     """Print a decorated section header."""
@@ -68,7 +68,7 @@ def safe_int_input(prompt, default=0):
     """
     try:
         return int(input(prompt))
-    except (TypeError, ValueError):
+    except ValueError:
         return default
 
 

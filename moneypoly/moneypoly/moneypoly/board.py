@@ -1,4 +1,4 @@
-"""Board layout and tile/property lookup helpers for MoneyPoly."""
+"""Board representation and tile lookup helpers for MoneyPoly."""
 
 from moneypoly.property import Property, PropertyGroup
 from moneypoly.config import (

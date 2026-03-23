@@ -1,4 +1,4 @@
-"""Dice rolling logic used by the game loop."""
+"""Dice utilities for turn movement and doubles tracking."""
 
 import random
 
