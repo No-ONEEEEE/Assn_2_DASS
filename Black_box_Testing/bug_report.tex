@@ -1,0 +1,272 @@
+﻿\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=3pt}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{Comprehensive Bug Report: QuickCart REST API}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+Based on black-box testing against the running QuickCart server, the following 16 explicit bugs were observed deviating from the QuickCart specification.
+
+\subsection*{Bug 1: Profile Phone Number Accepts Alphabetical Characters}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{PUT /api/v1/profile}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} PUT
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/profile}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"name": "Alice", "phone": "abcdefghij"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (phone must be exactly 10 digits)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Non-numeric phone input was accepted and profile update succeeded.
+\end{itemize}
+
+\subsection*{Bug 2: Valid Address Addition Rejected Improperly}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/addresses}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/addresses}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"label": "HOME", "street": "123 Main St", "city": "Metropolis", "pincode": "123456"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 200 OK (valid address should be created)
+  \item \textbf{Actual result observed:} 400 Bad Request
+  \item \textbf{Failure detail:} Valid input matching documented constraints is rejected.
+\end{itemize}
+
+\subsection*{Bug 3: Street Minimum Bound Calculation Error (5 Characters Rejected)}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/addresses}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/addresses}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"label": "HOME", "street": "12345", "city": "Metropolis", "pincode": "123456"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 200 OK (street length 5 is lower inclusive bound)
+  \item \textbf{Actual result observed:} 400 Bad Request
+  \item \textbf{Failure detail:} Lower boundary value for street length is rejected.
+\end{itemize}
+
+\subsection*{Bug 4: Street Maximum Bound Calculation Error (100 Characters Rejected)}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/addresses}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/addresses}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"label": "HOME", "street": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "city": "Metropolis", "pincode": "123456"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 200 OK (street length 100 is upper inclusive bound)
+  \item \textbf{Actual result observed:} 400 Bad Request
+  \item \textbf{Failure detail:} Upper boundary value for street length is rejected.
+\end{itemize}
+
+\subsection*{Bug 5: Invalid Pincode Limits Allowed (Too Short)}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/addresses}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/addresses}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"label": "HOME", "street": "123 Main St", "city": "Metropolis", "pincode": "12345"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (pincode must be exactly 6 digits)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Pincode shorter than 6 digits is accepted.
+\end{itemize}
+
+\subsection*{Bug 6: Invalid Pincode Limits Allowed (Too Long)}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/addresses}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/addresses}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"label": "HOME", "street": "123 Main St", "city": "Metropolis", "pincode": "1234567"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (pincode must be exactly 6 digits)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Pincode longer than 6 digits is accepted.
+\end{itemize}
+
+\subsection*{Bug 7: Cart Add with Exact Zero Quantity Accepted}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/cart/add}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/cart/add}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"product_id": 1, "quantity": 0\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (quantity must be at least 1)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Quantity 0 is accepted in cart add.
+\end{itemize}
+
+\subsection*{Bug 8: Cart Add with Negative Quantity Accepted}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/cart/add}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/cart/add}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"product_id": 1, "quantity": -5\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (quantity must be at least 1)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Negative quantity is accepted in cart add.
+\end{itemize}
+
+\subsection*{Bug 9: Updating Cart that Doesn't Exist Returns Incorrect Status}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/cart/update}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/cart/update}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"product_id": 999999, "quantity": 2\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 404 Not Found (updating non-existent cart item should fail)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Update call succeeds for product not present in cart.
+\end{itemize}
+
+\subsection*{Bug 10: Applying Invalid Coupon Code Returns 400 instead of 404}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/coupon/apply}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/coupon/apply}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"code": "INVALID_CODE_123"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 404 Not Found (invalid/non-existent coupon should be treated as missing resource)
+  \item \textbf{Actual result observed:} 400 Bad Request
+  \item \textbf{Failure detail:} Server returns 400 instead of not-found semantics.
+\end{itemize}
+
+\subsection*{Bug 11: Review Created with Zero Rating}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/products/1/reviews}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/products/1/reviews}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"rating": 0, "comment": "Okayish"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (rating must be in range 1-5)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Out-of-range low rating is accepted.
+\end{itemize}
+
+\subsection*{Bug 12: Review Created with Rating Over Boundaries Limitation (6)}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/products/1/reviews}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/products/1/reviews}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"rating": 6, "comment": "Okayish"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 400 Bad Request (rating must be in range 1-5)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Out-of-range high rating is accepted.
+\end{itemize}
+
+\subsection*{Bug 13: Creating a Review for a Non-Existent Product Appears Successful}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{POST /api/v1/products/\{product_id\}/reviews}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} POST
+    \item \textbf{URL:} \texttt{http://localhost:8080/api/v1/products/999999/reviews}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Body:} \texttt{\{"rating": 4, "comment": "Nice"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} 404 Not Found (cannot create review for missing product)
+  \item \textbf{Actual result observed:} 200 OK
+  \item \textbf{Failure detail:} Review creation succeeds even for non-existent product id.
+\end{itemize}
+
+\subsection*{Bug 14: Product Price Mismatch Between User and Admin Endpoints}
+\begin{itemize}
+  \item \textbf{Endpoints tested:} \texttt{GET /api/v1/products}, \texttt{GET /api/v1/admin/products}
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Method:} GET
+    \item \textbf{URL 1:} \texttt{http://localhost:8080/api/v1/products}
+    \item \textbf{URL 2:} \texttt{http://localhost:8080/api/v1/admin/products}
+    \item \textbf{Headers URL 1:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+    \item \textbf{Headers URL 2:} \texttt{\{"X-Roll-Number": "123"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} For the same \texttt{product_id}, the \texttt{price} should be identical on both endpoints.
+  \item \textbf{Actual result observed:} Price mismatch detected for same product (\texttt{100} from user endpoint vs \texttt{95} from admin endpoint).
+\end{itemize}
+
+\subsection*{Bug 15: Cart Item Subtotal Is Incorrect}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{GET /api/v1/cart} (after add)
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Step 1 Method:} POST
+    \item \textbf{Step 1 URL:} \texttt{http://localhost:8080/api/v1/cart/add}
+    \item \textbf{Step 1 Body:} \texttt{\{"product_id": <valid_product_id>, "quantity": 3\}}
+    \item \textbf{Step 2 Method:} GET
+    \item \textbf{Step 2 URL:} \texttt{http://localhost:8080/api/v1/cart}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} Item \texttt{subtotal} should be exactly \texttt{quantity * unit_price}.
+  \item \textbf{Actual result observed:} API returned subtotal \texttt{104} when expected subtotal was \texttt{360} (\texttt{3 * 120}).
+\end{itemize}
+
+\subsection*{Bug 16: Cart Total Does Not Include All Item Subtotals}
+\begin{itemize}
+  \item \textbf{Endpoint tested:} \texttt{GET /api/v1/cart} (after adding multiple items)
+  \item \textbf{Request payload:}
+  \begin{itemize}
+    \item \textbf{Step 1 Method:} POST
+    \item \textbf{Step 1 URL:} \texttt{http://localhost:8080/api/v1/cart/add}
+    \item \textbf{Step 1 Body:} first product quantity \texttt{1}
+    \item \textbf{Step 2 Method:} POST
+    \item \textbf{Step 2 URL:} \texttt{http://localhost:8080/api/v1/cart/add}
+    \item \textbf{Step 2 Body:} second product quantity \texttt{2}
+    \item \textbf{Step 3 Method:} GET
+    \item \textbf{Step 3 URL:} \texttt{http://localhost:8080/api/v1/cart}
+    \item \textbf{Headers:} \texttt{\{"X-Roll-Number": "123", "X-User-ID": "1"\}}
+  \end{itemize}
+  \item \textbf{Expected result:} Cart \texttt{total} should equal the sum of all line item subtotals.
+  \item \textbf{Actual result observed:} API returned total \texttt{120} while calculated total from items was \texttt{380}.
+\end{itemize}
+
+\subsection*{Execution Note (Latest Expanded Run)}
+An additional large exploratory suite was added and executed from \texttt{test_quickcart_api.py}, but the server at \texttt{localhost:8080} was unreachable during that run (\texttt{Connection refused}).
+
+Because of that infrastructure issue, no additional behavior-level bugs beyond Bug 16 could be confirmed and appended from that specific run.
+
+\end{document}
